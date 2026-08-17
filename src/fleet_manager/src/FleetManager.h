@@ -1,33 +1,28 @@
 // Here goes something
-#include <chrono>
-#include <functional>
-#include <memory>
-#include <string>
+#pragma once
 
-#include "rclcpp/rclcpp.hpp"
-#include "rclcpp_action/rclcpp_action.hpp"
-#include "nav2_msgs/action/navigate_to_pose.hpp"
+#include <unordered_map>
 
+#include "Robot.h"
+#include "fleet_manager/Core.h"
+#include "fleet_manager/Task.hpp"
+
+namespace fms
+{
 using namespace std::chrono_literals;
 
 class FleetManager : public rclcpp::Node
 {
-    using NavigateToPose = nav2_msgs::action::NavigateToPose;
-    using GoalHandleNavigate = rclcpp_action::ClientGoalHandle<NavigateToPose>;
-
 public:
-    FleetManager();
+  FleetManager();
 
 private:
-    void heartbeat();
-    //
-    void sendTestGoal();
-    void goalResponseCallback(const GoalHandleNavigate::SharedPtr goal_handle);
-    void feedbackCallback(GoalHandleNavigate::SharedPtr, const std::shared_ptr<const NavigateToPose::Feedback> feedback);
-    void resultCallback(const GoalHandleNavigate::WrappedResult & result);
+  void allocateTask();
 
 private:
-    rclcpp::TimerBase::SharedPtr timer_;
-    //
-    rclcpp_action::Client<NavigateToPose>::SharedPtr nav_client_;
+  std::unordered_map<std::string, std::shared_ptr<fms::Robot>> robots_;
+  rclcpp::TimerBase::SharedPtr timer_;
+  bool task_allocated_{false};
 };
+
+} // namespace fms

@@ -1,87 +1,52 @@
 #include "FleetManager.h"
 
-FleetManager::FleetManager()
+fms::FleetManager::FleetManager() //
     : Node("fleet_manager")
 {
-    RCLCPP_INFO(this->get_logger(), "Fleet Manager started");
+  RCLCPP_INFO(get_logger(), "Fleet Manager started.");
 
-    nav_client_ = rclcpp_action::create_client<NavigateToPose>(this, "/navigate_to_pose");
-    timer_ = this->create_wall_timer(2s, std::bind(&FleetManager::sendTestGoal, this));
+  auto self = shared_from_this();
+
+  // Create robots.
+  robots_["robot1"] = std::make_shared<fms::Robot>(self, "robot1");
+
+  RCLCPP_INFO(get_logger(), "Registered robot1.");
+
+  timer_ = create_wall_timer(3s, std::bind(&FleetManager::allocateTask, this));
 }
 
-void FleetManager::heartbeat()
+void fms::FleetManager::allocateTask()
 {
-    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Fleet Manager alive");
-}
+  if (task_allocated_)
+  {
+    RCLCPP_INFO(get_logger(), "Task already allocated.");
+    return;
+  }
 
-void FleetManager::sendTestGoal()
-{
-    timer_->cancel();
-    if (!nav_client_->wait_for_action_server(5s))
-    {
-        RCLCPP_ERROR(this->get_logger(), "NavigateToPose action server not available");
-        return;
-    }
-    
-    auto goal = NavigateToPose::Goal();
-    goal.pose.header.frame_id = "map";
-    goal.pose.header.stamp = this->get_clock()->now();
+  const auto &agent = robots_.at("robot1");
+  if (!agent->available())
+    return;
 
-    // Destination.
-    goal.pose.pose.position.x = 1.0;
-    goal.pose.pose.position.y = 0.0;
-    goal.pose.pose.orientation.w = 1.0;
+  // Create a test task.
+  fms::Task task;
+  task.id = "1";
+  task.source = "A";
+  task.destination = "B";
+  task.priority = 1;
 
-    RCLCPP_INFO(this->get_logger(), "Sending goal : (%.2f, %.2f)", goal.pose.pose.position.x, goal.pose.pose.position.y);
+  RCLCPP_INFO(get_logger(), "Dispatching Task %s: %s -> %s", task.id.c_str(), task.source.c_str(), task.destination.c_str());
 
-    rclcpp_action::Client<NavigateToPose>::SendGoalOptions options;
-    options.goal_response_callback = std::bind(&FleetManager::goalResponseCallback, this, std::placeholders::_1);
-    options.feedback_callback = std::bind(&FleetManager::feedbackCallback, this, std::placeholders::_1, std::placeholders::_2);
-    options.result_callback = std::bind(&FleetManager::resultCallback, this, std::placeholders::_1);
+  task.status = fms::TaskStatus::ASSIGNED;
 
-    nav_client_->async_send_goal(goal, options);
-}
-
-void FleetManager::goalResponseCallback(const GoalHandleNavigate::SharedPtr goal_handle)
-{
-    if (!goal_handle)
-    {
-        RCLCPP_ERROR(this->get_logger(), "Goal was rejected by the action server");
-        return;
-    }
-
-    RCLCPP_INFO(this->get_logger(), "Goal accepted by the action server, waiting for result");
-}
-
-void FleetManager::feedbackCallback(GoalHandleNavigate::SharedPtr, const std::shared_ptr<const NavigateToPose::Feedback> feedback)
-{
-    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "Received feedback: (%.2f, %.2f), Distance remaining: %.2f", feedback->current_pose.pose.position.x, feedback->current_pose.pose.position.y, feedback->distance_remaining);
-}
-
-void FleetManager::resultCallback(const GoalHandleNavigate::WrappedResult & result)
-{
-    switch (result.code)
-    {
-        case rclcpp_action::ResultCode::SUCCEEDED:
-            RCLCPP_INFO(this->get_logger(), "Goal succeeded!");
-            break;
-        case rclcpp_action::ResultCode::ABORTED:
-            RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
-            break;
-        case rclcpp_action::ResultCode::CANCELED:
-            RCLCPP_WARN(this->get_logger(), "Goal was canceled");
-            break;
-        default:
-            RCLCPP_ERROR(this->get_logger(), "Unknown result code");
-            break;
-    }
-}
-
-int main(int argc, char* argv[])
-{
-    rclcpp::init(argc, argv);
-    auto node = std::make_shared<FleetManager>();
-    rclcpp::spin(node);
-    rclcpp::shutdown();
-    return 0;
+  if (agent->navigateTo(1.0, 0.0))
+  {
+    task.status = fms::TaskStatus::IN_PROGRESS;
+    task_allocated_ = true;
+    RCLCPP_INFO(get_logger(), "Task %s assigned to robot %s.", task.id.c_str(), agent->id().c_str());
+  }
+  else
+  {
+    task.status = fms::TaskStatus::FAILED;
+    RCLCPP_ERROR(get_logger(), "Failed to assign Task %s", task.id.c_str());
+  }
 }

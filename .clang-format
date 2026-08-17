@@ -1,0 +1,25 @@
+# Basis style to inherit default settings
+BasedOnStyle: LLVM
+
+# Keep lines as long as possible before wrapping
+ColumnLimit: 150
+
+# Do not wrap bin packed arguments or parameters prematurely
+BinPackArguments: true
+BinPackParameters: true
+
+# Force opening braces to always be on a new line
+BreakBeforeBraces: Allman
+
+# Prevent wrapping of short blocks, functions, or control statements
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# Align the colons and commas on the next line
+BreakConstructorInitializers: BeforeColon
+
+# Bundles variables together on one line once pushed down by the comment
+PackConstructorInitializers: BinPack
