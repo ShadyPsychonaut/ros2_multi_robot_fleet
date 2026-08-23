@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits>
+
 #include "Agent.h"
 #include "fleet_manager/Task.hpp"
 
@@ -13,7 +15,7 @@ class TaskAllocator
 public:
   explicit TaskAllocator(const std::unordered_map<std::string, std::shared_ptr<fms::Agent>> &agents);
 
-  void allocate(const fms::Task &task) const;
+  std::string allocate(const fms::Task &task) const;
 
 private:
   const std::unordered_map<std::string, std::shared_ptr<fms::Agent>> &agents_;

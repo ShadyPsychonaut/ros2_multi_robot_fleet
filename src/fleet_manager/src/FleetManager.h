@@ -1,9 +1,12 @@
 // Here goes something
 #pragma once
 
+#include <queue>
+
 #include "common/Agent.h"
 #include "fleet_manager/Core.h"
 #include "fleet_manager/Task.hpp"
+#include "task/TaskAllocator.h"
 
 namespace fms
 {
@@ -16,13 +19,19 @@ public:
   void init();
 
 private:
+  void enqueTasks();
+  void dispatchTasks();
   void logFleetState();
-  void allocateTask();
 
 private:
   std::unordered_map<std::string, std::shared_ptr<fms::Agent>> agents_;
-  rclcpp::TimerBase::SharedPtr timer_;
-  bool task_allocated_{false};
+  std::queue<fms::Task> task_queue_;
+  std::unique_ptr<fms::TaskAllocator> allocator_;
+
+  rclcpp::TimerBase::SharedPtr dispatch_timer_;
+  rclcpp::TimerBase::SharedPtr log_state_timer_;
+
+  bool test_tasks_created_{false};
 };
 
 } // namespace fms
