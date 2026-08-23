@@ -1,8 +1,6 @@
 // Here goes something
 #pragma once
 
-#include <unordered_map>
-
 #include "common/Agent.h"
 #include "fleet_manager/Core.h"
 #include "fleet_manager/Task.hpp"
@@ -18,6 +16,7 @@ public:
   void init();
 
 private:
+  void logFleetState();
   void allocateTask();
 
 private:

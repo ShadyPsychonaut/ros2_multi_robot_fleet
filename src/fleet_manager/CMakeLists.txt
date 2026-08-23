@@ -32,6 +32,7 @@ endif()
 
 include_directories(include)
 add_subdirectory(src/common)
+add_subdirectory(src/task)
 
 add_executable(fleet_manager
   src/main.cpp
@@ -40,6 +41,7 @@ add_executable(fleet_manager
 
 # Link sub-library targets.
 target_link_libraries(fleet_manager common)
+target_link_libraries(fleet_manager task)
 
 ament_target_dependencies(fleet_manager
   rclcpp
@@ -50,6 +52,7 @@ ament_target_dependencies(fleet_manager
 install(TARGETS
   fleet_manager
   common
+  task
   DESTINATION lib/${PROJECT_NAME}
 )
 

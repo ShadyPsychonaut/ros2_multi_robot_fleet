@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AgentState.h"
 #include "fleet_manager/Core.h"
 
 #include "nav2_msgs/action/navigate_to_pose.hpp"
@@ -22,6 +23,7 @@ public:
   // Getters.
   bool available() const;
   const std::string &id() const;
+  const fms::AgentState &state() const;
 
 private:
   void goalResponseCallback(const GoalHandle::SharedPtr &goal_handle);
@@ -32,7 +34,7 @@ private:
   rclcpp::Node::SharedPtr node_;
   std::string agent_id_;
   std::string namespace_{"/"};
-  bool is_available_{true};
+  AgentState state_;
   rclcpp_action::Client<NavigateToPose>::SharedPtr nav_client_;
 };
 

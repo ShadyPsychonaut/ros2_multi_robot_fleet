@@ -8,7 +8,7 @@ fms::Agent::Agent(const rclcpp::Node::SharedPtr &node, const std::string &id, co
 
 bool fms::Agent::navigateTo(const double &x, const double &y)
 {
-  if (!is_available_)
+  if (!available())
   {
     RCLCPP_WARN(node_->get_logger(), "Agent %s is not available.", agent_id_.c_str());
     return false;
@@ -45,7 +45,7 @@ bool fms::Agent::navigateTo(const double &x, const double &y)
 
 bool fms::Agent::available() const
 {
-  return is_available_;
+  return state_.status == AgentStatus::IDLE;
 }
 
 const std::string &fms::Agent::id() const
@@ -53,15 +53,21 @@ const std::string &fms::Agent::id() const
   return agent_id_;
 }
 
+const fms::AgentState &fms::Agent::state() const
+{
+  return state_;
+}
+
 void fms::Agent::goalResponseCallback(const GoalHandle::SharedPtr &goal_handle)
 {
   if (!goal_handle)
   {
-    is_available_ = true;
+    state_.status = AgentStatus::FAILED;
     RCLCPP_ERROR(node_->get_logger(), "Agent %s: navigation goal rejected.", agent_id_.c_str());
     return;
   }
 
+  state_.status = AgentStatus::RUNNING;
   RCLCPP_INFO(node_->get_logger(), "Agent %s: navigation goal accepted.", agent_id_.c_str());
 }
 
@@ -73,23 +79,25 @@ void fms::Agent::feedbackCallback(GoalHandle::SharedPtr, const std::shared_ptr<c
 
 void fms::Agent::resultCallback(const GoalHandle::WrappedResult &result)
 {
-  is_available_ = true;
-
   switch (result.code)
   {
   case rclcpp_action::ResultCode::SUCCEEDED:
+    state_.status = AgentStatus::IDLE;
     RCLCPP_INFO(node_->get_logger(), "Agent %s: navigation succeeded.", agent_id_.c_str());
     break;
 
   case rclcpp_action::ResultCode::ABORTED:
+    state_.status = AgentStatus::FAILED;
     RCLCPP_ERROR(node_->get_logger(), "Agent %s: navigation aborted.", agent_id_.c_str());
     break;
 
   case rclcpp_action::ResultCode::CANCELED:
+    state_.status = AgentStatus::IDLE;
     RCLCPP_WARN(node_->get_logger(), "Agent %s: navigation canceled.", agent_id_.c_str());
     break;
 
   default:
+    state_.status = AgentStatus::FAILED;
     RCLCPP_ERROR(node_->get_logger(), "Agent %s: unknown navigation result.", agent_id_.c_str());
     break;
   }

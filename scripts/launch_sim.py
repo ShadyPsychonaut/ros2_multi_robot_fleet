@@ -8,11 +8,6 @@ Brings up N TurtleBot3 agents in Gazebo and a full Nav2/AMCL stack per Agent:
   - Nav2 lifecycle nodes autostart
   - AMCL is auto-seeded with each Agent's known spawn pose
 
-Drop this into <your_pkg>/launch/ and run:
-
-    ros2 launch <your_pkg> launch_sim.py
-    ros2 launch <your_pkg> launch_sim.py use_rviz:=True
-
 """
 import os
 import math
@@ -26,7 +21,7 @@ agentS = [
     {'name': 'agent3', 'x': 2.0, 'y': 0.0, 'yaw': 3.1416},
 ]
 
-BOOT_GRACE_PERIOD = 15.0  # Give Gazebo and Nav2 plenty of time to boot
+BOOT_GRACE_PERIOD = 15.0
 POLL_INTERVAL = 2.0       
 
 def _agents_launch_arg() -> str:
@@ -50,7 +45,7 @@ def _initial_pose_yaml(x, y, yaw):
 def generate_launch_description():
     agents_str = _agents_launch_arg()
     
-    # We pass the default sandbox map. If you are using a custom map, replace this path!
+    # Path to the map file (adjust as needed)
     map_path = '/opt/ros/jazzy/share/nav2_bringup/maps/tb3_sandbox.yaml'
 
     launch_multi_agent = ExecuteProcess(
@@ -67,7 +62,7 @@ def generate_launch_description():
 
     actions = [launch_multi_agent]
 
-    # Automated Initialization and Force-Activation Loops
+    # Automated Initialization
     for r in agentS:
         ns = r['name']
         pose_cmd = _initial_pose_yaml(r['x'], r['y'], r['yaw'])
