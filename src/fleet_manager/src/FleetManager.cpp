@@ -4,15 +4,23 @@ fms::FleetManager::FleetManager() //
     : Node("fleet_manager")
 {
   RCLCPP_INFO(get_logger(), "Fleet Manager started.");
+  timer_ = create_wall_timer(3s, std::bind(&FleetManager::allocateTask, this));
+}
+
+void fms::FleetManager::init()
+{
+  RCLCPP_INFO(get_logger(), "Fleet Manager initialized.");
 
   auto self = shared_from_this();
+  // Create agents.
+  agents_["1"] = std::make_shared<fms::Agent>(self, "1", "/robot1");
+  RCLCPP_INFO(get_logger(), "Registered agent1.");
 
-  // Create robots.
-  robots_["robot1"] = std::make_shared<fms::Robot>(self, "robot1");
+  agents_["2"] = std::make_shared<fms::Agent>(self, "2", "/robot2");
+  RCLCPP_INFO(get_logger(), "Registered agent2.");
 
-  RCLCPP_INFO(get_logger(), "Registered robot1.");
-
-  timer_ = create_wall_timer(3s, std::bind(&FleetManager::allocateTask, this));
+  agents_["3"] = std::make_shared<fms::Agent>(self, "3", "/robot3");
+  RCLCPP_INFO(get_logger(), "Registered agent3.");
 }
 
 void fms::FleetManager::allocateTask()
@@ -23,30 +31,36 @@ void fms::FleetManager::allocateTask()
     return;
   }
 
-  const auto &agent = robots_.at("robot1");
-  if (!agent->available())
-    return;
-
-  // Create a test task.
-  fms::Task task;
-  task.id = "1";
-  task.source = "A";
-  task.destination = "B";
-  task.priority = 1;
-
-  RCLCPP_INFO(get_logger(), "Dispatching Task %s: %s -> %s", task.id.c_str(), task.source.c_str(), task.destination.c_str());
-
-  task.status = fms::TaskStatus::ASSIGNED;
-
-  if (agent->navigateTo(1.0, 0.0))
+  struct TestGoal
   {
-    task.status = fms::TaskStatus::IN_PROGRESS;
-    task_allocated_ = true;
-    RCLCPP_INFO(get_logger(), "Task %s assigned to robot %s.", task.id.c_str(), agent->id().c_str());
-  }
-  else
+    std::string agent_id;
+    double x;
+    double y;
+  };
+
+  const std::vector<TestGoal> goals = {
+      {"1", -1.0, 0.0},
+      {"2", 1.0, 4.0},
+      {"3", 0.0, -1.0},
+  };
+
+  for (const auto &goal : goals)
   {
-    task.status = fms::TaskStatus::FAILED;
-    RCLCPP_ERROR(get_logger(), "Failed to assign Task %s", task.id.c_str());
+    auto it = agents_.find(goal.agent_id);
+    if (it == agents_.end())
+    {
+      RCLCPP_ERROR(get_logger(), "Agent %s not found.", goal.agent_id.c_str());
+      continue;
+    }
+    if (!it->second->available())
+    {
+      RCLCPP_WARN(get_logger(), "Agent %s is not available.", goal.agent_id.c_str());
+      continue;
+    }
+
+    RCLCPP_INFO(get_logger(), "Dispatching Agent %s to (%.2f, %.2f).", goal.agent_id.c_str(), goal.x, goal.y);
+    it->second->navigateTo(goal.x, goal.y);
   }
+
+  task_allocated_ = true;
 }

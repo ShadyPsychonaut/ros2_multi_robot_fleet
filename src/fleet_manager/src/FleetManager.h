@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 
-#include "Robot.h"
+#include "common/Agent.h"
 #include "fleet_manager/Core.h"
 #include "fleet_manager/Task.hpp"
 
@@ -15,12 +15,13 @@ class FleetManager : public rclcpp::Node
 {
 public:
   FleetManager();
+  void init();
 
 private:
   void allocateTask();
 
 private:
-  std::unordered_map<std::string, std::shared_ptr<fms::Robot>> robots_;
+  std::unordered_map<std::string, std::shared_ptr<fms::Agent>> agents_;
   rclcpp::TimerBase::SharedPtr timer_;
   bool task_allocated_{false};
 };

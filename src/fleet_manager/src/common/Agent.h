@@ -9,13 +9,13 @@ namespace fms
 {
 using namespace std::chrono_literals;
 
-class Robot
+class Agent
 {
 public:
   using NavigateToPose = nav2_msgs::action::NavigateToPose;
   using GoalHandle = rclcpp_action::ClientGoalHandle<NavigateToPose>;
 
-  Robot(const rclcpp::Node::SharedPtr &node, const std::string &robot_id);
+  Agent(const rclcpp::Node::SharedPtr &node, const std::string &id, const std::string &ns = "/");
 
   bool navigateTo(const double &x, const double &y);
 
@@ -30,7 +30,8 @@ private:
 
 private:
   rclcpp::Node::SharedPtr node_;
-  std::string robot_id_;
+  std::string agent_id_;
+  std::string namespace_{"/"};
   bool is_available_{true};
   rclcpp_action::Client<NavigateToPose>::SharedPtr nav_client_;
 };

@@ -31,12 +31,15 @@ if(BUILD_TESTING)
 endif()
 
 include_directories(include)
+add_subdirectory(src/common)
 
 add_executable(fleet_manager
   src/main.cpp
   src/FleetManager.cpp
-  src/Robot.cpp
 )
+
+# Link sub-library targets.
+target_link_libraries(fleet_manager common)
 
 ament_target_dependencies(fleet_manager
   rclcpp
@@ -46,6 +49,7 @@ ament_target_dependencies(fleet_manager
 
 install(TARGETS
   fleet_manager
+  common
   DESTINATION lib/${PROJECT_NAME}
 )
 
