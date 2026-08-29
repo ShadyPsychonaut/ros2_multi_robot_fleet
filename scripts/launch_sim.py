@@ -15,10 +15,10 @@ from launch import LaunchDescription
 from launch.actions import ExecuteProcess
 
 # --- CONFIGURATION ---
-agentS = [
-    {'name': 'agent1', 'x': 0.5, 'y': 0.5, 'yaw': 0.0},
-    {'name': 'agent2', 'x': -0.5, 'y': -0.5, 'yaw': 1.5707},
-    {'name': 'agent3', 'x': 2.0, 'y': 0.0, 'yaw': 3.1416},
+agents = [
+    {'name': 'robot1', 'x': 0.5, 'y': 0.5, 'yaw': 0.0},
+    {'name': 'robot2', 'x': -0.5, 'y': -0.5, 'yaw': 1.5707},
+    {'name': 'robot3', 'x': 2.0, 'y': 0.0, 'yaw': 3.1416},
 ]
 
 BOOT_GRACE_PERIOD = 15.0
@@ -28,7 +28,7 @@ def _agents_launch_arg() -> str:
     """Builds the verified CLI Agent configuration mapping string."""
     return '; '.join(
         f"{r['name']}={{x: {r['x']}, y: {r['y']}, yaw: {r['yaw']}}}"
-        for r in agentS
+        for r in agents
     )
 
 def _initial_pose_yaml(x, y, yaw):
@@ -55,7 +55,7 @@ def generate_launch_description():
             'use_rviz:=True',
             'autostart:=True',
             f'map:={map_path}',
-            f'agents:={agents_str}'
+            f'robots:={agents_str}'
         ],
         output='screen'
     )
@@ -63,7 +63,7 @@ def generate_launch_description():
     actions = [launch_multi_agent]
 
     # Automated Initialization
-    for r in agentS:
+    for r in agents:
         ns = r['name']
         pose_cmd = _initial_pose_yaml(r['x'], r['y'], r['yaw'])
         

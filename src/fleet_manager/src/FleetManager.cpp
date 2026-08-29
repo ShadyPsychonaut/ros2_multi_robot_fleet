@@ -30,10 +30,47 @@ void fms::FleetManager::init()
 
 void fms::FleetManager::enqueTasks()
 {
+  if (test_tasks_created_)
+    return;
+
+  task_queue_.push(fms::Task{"1", "stationA", "stationB", {-1.0, 0.0}, {0.5, 0.0}, 1, fms::TaskStatus::ACCEPTED, ""});
+  task_queue_.push(fms::Task{"2", "stationC", "stationD", {0.0, 1.0}, {1.0, 0.5}, 5, fms::TaskStatus::ACCEPTED, ""});
+  task_queue_.push(fms::Task{"3", "stationE", "stationF", {1.0, -0.5}, {-0.5, -1.0}, 3, fms::TaskStatus::ACCEPTED, ""});
+
+  test_tasks_created_ = true;
+  RCLCPP_INFO(get_logger(), "Test tasks enqueued.");
 }
 
 void fms::FleetManager::dispatchTasks()
 {
+  while (!task_queue_.empty())
+  {
+    auto &task = task_queue_.front();
+    const auto agent_id = allocator_->allocate(task);
+
+    if (agent_id.empty())
+    {
+      RCLCPP_WARN(get_logger(), "No available agent for task %s. Retrying later.", task.id.c_str());
+      break;
+    }
+
+    auto &agent = agents_[agent_id];
+    RCLCPP_INFO(get_logger(), "Dispatching task %s to agent %s.", task.id.c_str(), agent_id.c_str());
+    task.status = fms::TaskStatus::ASSIGNED;
+
+    if (agent->navigateTo(task.source_pose.x, task.source_pose.y))
+    {
+      RCLCPP_INFO(get_logger(), "Task %s started by agent %s.", task.id.c_str(), agent_id.c_str());
+      task.assigned_agent_id = agent_id;
+      task.status = fms::TaskStatus::IN_PROGRESS;
+      task_queue_.pop();
+    }
+    else
+    {
+      RCLCPP_ERROR(get_logger(), "Failed to send navigation goal for task %s to agent %s.", task.id.c_str(), agent_id.c_str());
+      break;
+    }
+  }
 }
 
 void fms::FleetManager::logFleetState()

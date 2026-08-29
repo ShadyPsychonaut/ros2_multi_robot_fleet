@@ -33,6 +33,7 @@ bool fms::Agent::navigateTo(const double &x, const double &y)
   goal.pose.pose.orientation.w = 1.0;
 
   RCLCPP_INFO(node_->get_logger(), "Agent %s navigating to (%.2f, %.2f).", agent_id_.c_str(), x, y);
+  state_.status = AgentStatus::RUNNING;
 
   rclcpp_action::Client<NavigateToPose>::SendGoalOptions options;
   options.goal_response_callback = std::bind(&fms::Agent::goalResponseCallback, this, std::placeholders::_1);
@@ -67,7 +68,6 @@ void fms::Agent::goalResponseCallback(const GoalHandle::SharedPtr &goal_handle)
     return;
   }
 
-  state_.status = AgentStatus::RUNNING;
   RCLCPP_INFO(node_->get_logger(), "Agent %s: navigation goal accepted.", agent_id_.c_str());
 }
 
