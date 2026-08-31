@@ -79,6 +79,7 @@ void fms::FleetManager::logFleetState()
   for (const auto &[id, agent] : agents_)
   {
     const auto &state = agent->state();
-    RCLCPP_INFO(get_logger(), "Agent %s: Status: %s, Battery: %.2f%%", id.c_str(), fms::to_string(state.status).c_str(), state.battery_percentage);
+    RCLCPP_INFO(get_logger(), "Agent %s: Status: %s, Battery: %.2f%%, Pose: (%.2f, %.2f)", id.c_str(), fms::to_string(state.status).c_str(),
+                state.battery_percentage, agent->state().pose.x, agent->state().pose.y);
   }
 }

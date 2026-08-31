@@ -10,6 +10,9 @@ ament_target_dependencies(common
   rclcpp
   rclcpp_action
   nav2_msgs
+  tf2
+  tf2_ros
+  tf2_msgs
 )
 
 target_include_directories(common PUBLIC

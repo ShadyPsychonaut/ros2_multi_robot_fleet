@@ -22,9 +22,10 @@ std::string fms::TaskAllocator::allocate(const fms::Task &task) const
       continue;
 
     // Calculate a score based on the distance to the task's source.
-    double score = std::hypot(agent->state().battery_percentage - task.source_pose.x, agent->state().battery_percentage - task.source_pose.y);
+    double score = agent->distanceTo(task.source_pose.x, task.source_pose.y) - (state.battery_percentage * 0.1);
     // Incorporate task priority into the score.
     score += task.priority * 10.0;
+
     if (score < max_score)
     {
       max_score = score;

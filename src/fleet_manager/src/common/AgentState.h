@@ -9,6 +9,9 @@ struct AgentState
 {
   AgentStatus status{AgentStatus::IDLE};
   double battery_percentage{100.0};
+
+  // Pose.
+  Pose pose;
 };
 
 } // namespace fms

@@ -1,9 +1,19 @@
 #include "Agent.h"
 
+#include "tf2/exceptions.h"
+#include "tf2_ros/qos.hpp"
+
 fms::Agent::Agent(const rclcpp::Node::SharedPtr &node, const std::string &id, const std::string &ns) //
     : node_(node), agent_id_(id), namespace_(ns)
 {
   nav_client_ = rclcpp_action::create_client<NavigateToPose>(node_, ns + "/navigate_to_pose");
+  // Transform listener.
+  tf_buffer_ = std::make_unique<tf2_ros::Buffer>(node_->get_clock());
+  tf_subscription_ = node_->create_subscription<tf2_msgs::msg::TFMessage>(
+      ns + "/tf", tf2_ros::DynamicListenerQoS(), [this](const tf2_msgs::msg::TFMessage::SharedPtr msg) { transformCallback(msg, false); });
+  tf_static_subscription_ = node_->create_subscription<tf2_msgs::msg::TFMessage>(
+      ns + "/tf_static", tf2_ros::StaticListenerQoS(), [this](const tf2_msgs::msg::TFMessage::SharedPtr msg) { transformCallback(msg, true); });
+  update_timer_ = node_->create_wall_timer(100ms, std::bind(&fms::Agent::update, this));
 }
 
 bool fms::Agent::navigateTo(const double &x, const double &y)
@@ -44,6 +54,11 @@ bool fms::Agent::navigateTo(const double &x, const double &y)
   return true;
 }
 
+double fms::Agent::distanceTo(const double &x, const double &y) const
+{
+  return Utils::norm2D(state_.pose.x - x, state_.pose.y - y);
+}
+
 bool fms::Agent::available() const
 {
   return state_.status == AgentStatus::IDLE;
@@ -57,6 +72,36 @@ const std::string &fms::Agent::id() const
 const fms::AgentState &fms::Agent::state() const
 {
   return state_;
+}
+
+void fms::Agent::update()
+{
+  try
+  {
+    const auto transform = tf_buffer_->lookupTransform("odom", "base_footprint", tf2::TimePointZero);
+    state_.pose.x = transform.transform.translation.x;
+    state_.pose.y = transform.transform.translation.y;
+  }
+  catch (const tf2::TransformException &e)
+  {
+    RCLCPP_WARN_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000, "Agent %s: unable to get pose: %s", agent_id_.c_str(), e.what());
+  }
+}
+
+void fms::Agent::transformCallback(const tf2_msgs::msg::TFMessage::SharedPtr msg, bool is_static)
+{
+  for (const auto &tf : msg->transforms)
+  {
+    try
+    {
+      tf_buffer_->setTransform(tf, agent_id_, is_static);
+    }
+    catch (const tf2::TransformException &e)
+    {
+      RCLCPP_WARN(node_->get_logger(), "Agent %s: failed to store TF %s -> %s: %s", agent_id_.c_str(), tf.header.frame_id.c_str(),
+                  tf.child_frame_id.c_str(), e.what());
+    }
+  }
 }
 
 void fms::Agent::goalResponseCallback(const GoalHandle::SharedPtr &goal_handle)
