@@ -16,6 +16,7 @@ void fms::FleetManager::init()
   agents_["2"] = std::make_shared<fms::Agent>(self, "2", "/robot2");
   agents_["3"] = std::make_shared<fms::Agent>(self, "3", "/robot3");
 
+  // Create task allocator.
   allocator_ = std::make_unique<fms::TaskAllocator>(agents_);
 
   RCLCPP_INFO(get_logger(), "Fleet Manager initialized.");
@@ -33,9 +34,9 @@ void fms::FleetManager::enqueTasks()
   if (test_tasks_created_)
     return;
 
-  task_queue_.push(fms::Task{"1", "stationA", "stationB", {-1.0, 0.0}, {0.5, 0.0}, 1, fms::TaskStatus::ACCEPTED, ""});
-  task_queue_.push(fms::Task{"2", "stationC", "stationD", {0.0, 1.0}, {1.0, 0.5}, 5, fms::TaskStatus::ACCEPTED, ""});
-  task_queue_.push(fms::Task{"3", "stationE", "stationF", {1.0, -0.5}, {-0.5, -1.0}, 3, fms::TaskStatus::ACCEPTED, ""});
+  task_queue_.push(fms::Task{"1", "stationA", "stationB", {-0.4, -0.4}, {0.5, 0.0}, 1, fms::TaskStatus::ACCEPTED, ""});
+  task_queue_.push(fms::Task{"2", "stationC", "stationD", {0.4, 0.4}, {1.0, 0.5}, 5, fms::TaskStatus::ACCEPTED, ""});
+  task_queue_.push(fms::Task{"3", "stationE", "stationF", {1.9, 0.1}, {-0.5, -1.0}, 3, fms::TaskStatus::ACCEPTED, ""});
 
   test_tasks_created_ = true;
   RCLCPP_INFO(get_logger(), "Test tasks enqueued.");

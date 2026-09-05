@@ -21,6 +21,7 @@ public:
 
   Agent(const rclcpp::Node::SharedPtr &node, const std::string &id, const std::string &ns = "/");
 
+  // Send goal.
   bool navigateTo(const double &x, const double &y);
   double distanceTo(const double &x, const double &y) const;
 

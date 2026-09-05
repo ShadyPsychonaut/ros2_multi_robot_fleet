@@ -12,6 +12,9 @@ struct AgentState
 
   // Pose.
   Pose pose;
+
+  // Fixed origin for agent's odom frame.
+  Pose origin;
 };
 
 } // namespace fms

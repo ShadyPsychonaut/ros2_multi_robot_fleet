@@ -78,7 +78,7 @@ void fms::Agent::update()
 {
   try
   {
-    const auto transform = tf_buffer_->lookupTransform("odom", "base_footprint", tf2::TimePointZero);
+    const auto transform = tf_buffer_->lookupTransform("map", "base_footprint", tf2::TimePointZero);
     state_.pose.x = transform.transform.translation.x;
     state_.pose.y = transform.transform.translation.y;
   }
